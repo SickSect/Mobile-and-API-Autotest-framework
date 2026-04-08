@@ -89,12 +89,18 @@ jobs:
       - name: Run E2E Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 30
           arch: x86_64
           profile: pixel_5
-          target: google_apis
-          cache-key: android-emulator-34-x86_64
+          target: default
+          disable-animations: true
+          disable-spellchecker: true
+          boot-timeout: 300
+          emulator-options: >
+            -no-window -gpu swiftshader_indirect -no-snapshot 
+            -noaudio -no-boot-anim -camera-back none
           script: |
+            adb devices
             ./gradlew clean testWithReport -Dconfig.file=ci.properties
 
       - name: Upload Allure Report
