@@ -1,0 +1,11 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="MobileParallelSuite" parallel="tests" thread-count="2" verbose="2">
+
+    <test name="CheckboxTests">
+        <classes>
+            <class name="org.ugina.tests.MainPageTest">
+            </class>
+        </classes>
+    </test>
+
+</suite>

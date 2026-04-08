@@ -6,28 +6,12 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.slf4j.MDC;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 import org.ugina.utils.ContextLogger;
 
 public class MainPage {
 
     private final AndroidDriver driver;
     private final WebDriverWait wait;
-
-    @BeforeTest
-    public void beforeTest() {
-        // ✅ Контекст устройства (для каждого потока свой)
-        MDC.put("deviceName", "Pixel_6_API_34");
-        MDC.put("platformVersion", "14");
-    }
-
-    @AfterTest
-    void tearDown() {
-        // ✅ Очистка ThreadLocal + MDC (обязательно для параллельных запусков)
-        ContextLogger.clearContext();
-    }
 
     /**
      * PAGE ELEMENTS

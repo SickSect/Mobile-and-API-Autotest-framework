@@ -21,7 +21,6 @@ public class ConfigReader {
         }
     }
 
-    // 🔹 Базовый геттер
     public static String get(String key) {
         String value = props.getProperty(key);
         if (value == null) throw new RuntimeException("❌ Ключ не найден: " + key);
@@ -40,7 +39,6 @@ public class ConfigReader {
         return pageDriverSetupData;
     }
 
-    // 🔹 Типизированные геттеры
     public static boolean getBoolean(String key) { return Boolean.parseBoolean(get(key)); }
     public static int getInt(String key) { return Integer.parseInt(get(key)); }
 }
