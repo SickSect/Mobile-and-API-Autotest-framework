@@ -52,6 +52,7 @@ test {
         threadCount 2
         useDefaultListeners = false
     }
+    systemProperty 'test.mode', System.getProperty('test.mode', 'local')
     finalizedBy 'allureReport'
 }
 

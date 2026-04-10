@@ -5,23 +5,17 @@ import io.qameta.allure.SeverityLevel;
 import io.qameta.allure.Story;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.ugina.Data.PageDriverSetupData;
 import org.ugina.pages.MainPage;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 public class MainPageTest extends BaseTest {
 
-    private MainPage page;
-    private PageDriverSetupData pageDriverSetupData;
-
     @Test(priority = 1)
     @Story("Check box")
     @Severity(SeverityLevel.CRITICAL)
     @Description("Testing pressing on check box and checking status")
     public void selectCheckBox1(){
-        Assert.assertNotNull(driver, "❌ Driver не инициализирован");
-        Assert.assertNotNull(wait, "❌ Wait не инициализирован");
         MainPage page = new MainPage(driver, wait);
         assertFalse(page.isSelectedCheckBox1());
         page.clickCheckBox1();

@@ -81,3 +81,140 @@ appium
 
 внести данные и начать сессию
 ```
+
+
+```angular2html
+  full-e2e-tests:
+    name: 🔴 Full Appium Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    if: >
+      github.event_name == 'pull_request' || 
+      github.ref == 'refs/heads/main' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_full_tests == true)
+
+    needs: build-check
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache Appium
+        uses: actions/cache@v4
+        with:
+          path: ~/.appium
+          key: appium-${{ runner.os }}-2.33.0
+
+      - name: Install Appium & Driver
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+          appium &
+          sleep 5  # Ждём старта сервера
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run E2E Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_5
+          target: google_apis
+          cache-key: android-emulator-34-x86_64
+          script: |
+            ./gradlew clean testWithReport -Dconfig.file=ci.properties
+
+      - name: Upload Allure Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ github.run_number }}
+          path: app/build/reports/allure-report
+          retention-days: 7
+
+
+full-e2e-tests:
+name: 🔴 Full Appium Tests
+runs-on: ubuntu-latest
+timeout-minutes: 40
+
+if: >
+github.event_name == 'pull_request' ||
+github.ref == 'refs/heads/main' ||
+(github.event_name == 'workflow_dispatch' && inputs.run_full_tests == true)
+
+needs: build-check
+
+steps:
+- name: Checkout code
+uses: actions/checkout@v4
+
+- name: Set up JDK
+uses: actions/setup-java@v4
+with:
+distribution: 'temurin'
+java-version: '17'
+
+- name: Set up Node.js
+uses: actions/setup-node@v4
+with:
+node-version: '20'
+
+- name: Cache Appium
+uses: actions/cache@v4
+with:
+path: ~/.appium
+key: appium-${{ runner.os }}-2.33.0
+
+- name: Install Appium & Driver
+run: |
+npm install -g appium
+appium driver install uiautomator2
+appium &
+sleep 5  # Ждём старта сервера
+
+- name: Make gradlew executable
+run: chmod +x ./gradlew
+
+- name: Run E2E Tests
+uses: reactivecircus/android-emulator-runner@v2
+with:
+api-level: 30
+arch: x86_64
+profile: pixel_5
+target: 'google_apis'
+force-avd-creation: true
+emulator-boot-timeout: 600
+disable-animations: true
+disable-spellchecker: true
+boot-timeout: 600
+emulator-options: >
+-no-window -gpu swiftshader_indirect -no-snapshot
+-noaudio -no-boot-anim -camera-back none
+script: |
+adb wait-for-device shell getprop sys.boot_completed
+echo "✅ Emulator is ready!"
+./gradlew clean testWithReport -Dconfig.file=ci.properties
+
+- name: Upload Allure Report
+if: always()
+uses: actions/upload-artifact@v4
+with:
+name: allure-report-${{ github.run_number }}
+path: app/build/reports/allure-report
+retention-days: 7
+```
