@@ -47,7 +47,6 @@ public class MainPage {
         );
         checkbox.click();
 
-        // 🔹 Ждём, пока состояние реально изменится (защита от flaky-тестов)
         wait.until(
                 org.openqa.selenium.support.ui.ExpectedConditions.attributeToBeNotEmpty(checkbox, "checked")
         );
@@ -72,7 +71,6 @@ public class MainPage {
                 org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated(checkBox1)
         );
 
-        // 🔹 В Android для CheckBox используем атрибут "checked", а не isSelected()
         String checked = checkbox.getAttribute("checked");
         ContextLogger.step("Checkbox 'checked' attribute: " + checked, "isSelectedCheckBox1()", "result");
 

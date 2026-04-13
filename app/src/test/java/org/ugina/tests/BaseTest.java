@@ -27,7 +27,7 @@ public class BaseTest {
         System.out.println("🚀 Starting in " + testMode.toUpperCase() + " mode");
 
         DriverFactory factory = new DriverFactory();
-        AndroidDriver driver = factory.createDriver(isCloud);
+        driver = factory.createDriver(isCloud);
 
         DriverManager.setDriver(driver);
 
