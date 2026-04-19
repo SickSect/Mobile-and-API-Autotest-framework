@@ -1,6 +1,5 @@
 package org.ugina.api;
 
-import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.ugina.ApiClient.Client.ApiRequestClient;
@@ -8,19 +7,9 @@ import org.ugina.ApiClient.Data.JsonRequestBody;
 import org.ugina.ApiClient.Data.RequestInfo;
 import org.ugina.ApiClient.Data.XmlRequestBody;
 
-import java.net.http.HttpResponse;
-
-/**
- * Тесты для шага 2: один клиент, разные форматы тела.
- *
- * Обрати внимание: apiClient.post() — один метод, но принимает
- * и JsonBody, и XmlBody. Клиент не знает о формате — он просто
- * берёт content() и contentType() из RequestBody.
- */
 public class SimpleApiTest {
 
     private ApiRequestClient apiClient;
-
 
     @BeforeClass
     public void setUp() {
@@ -34,10 +23,13 @@ public class SimpleApiTest {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setMethod("GET");
         requestInfo.setPath("/posts/1");
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertBodyContains("\"title\"");
     }
 
-// ════════════════════════════════════════════
+    // ════════════════════════════════════════════
     //  БЕЗ ТЕЛА (GET, DELETE)
     // ════════════════════════════════════════════
 
@@ -47,11 +39,10 @@ public class SimpleApiTest {
         requestInfo.setMethod("GET");
         requestInfo.setPath("/users");
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
-        Assert.assertTrue(response.body().contains("\"email\""),
-                "Ответ должен содержать список пользователей с полем email");
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertBodyContains("\"email\"")
+                .assertBodyNotEmpty();
     }
 
     @Test
@@ -60,11 +51,9 @@ public class SimpleApiTest {
         requestInfo.setMethod("GET");
         requestInfo.setPath("/users/1");
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
-        Assert.assertTrue(response.body().contains("Leanne Graham"),
-                "Пользователь с ID=1 должен быть Leanne Graham");
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertBodyContains("Leanne Graham");
     }
 
     @Test
@@ -73,9 +62,8 @@ public class SimpleApiTest {
         requestInfo.setMethod("DELETE");
         requestInfo.setPath("/posts/1");
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200);
     }
 
     // ════════════════════════════════════════════
@@ -89,11 +77,9 @@ public class SimpleApiTest {
         requestInfo.setPath("/comments");
         requestInfo.addQueryParam("postId", "1");
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
-        Assert.assertTrue(response.body().contains("\"postId\": 1"),
-                "Все комментарии должны быть от поста с ID=1");
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertBodyContains("\"postId\": 1");
     }
 
     @Test
@@ -104,11 +90,10 @@ public class SimpleApiTest {
         requestInfo.addQueryParam("userId", "1");
         requestInfo.addQueryParam("id", "1");
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
-        Assert.assertTrue(response.body().contains("\"userId\": 1"));
-        Assert.assertTrue(response.body().contains("\"id\": 1"));
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertBodyContains("\"userId\": 1")
+                .assertBodyContains("\"id\": 1");
     }
 
     // ════════════════════════════════════════════
@@ -132,11 +117,9 @@ public class SimpleApiTest {
         requestInfo.addQueryParam("version", "2");
         requestInfo.setBody(body);
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 201);
-        Assert.assertTrue(response.body().contains("\"id\""),
-                "Ответ должен содержать ID созданного ресурса");
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(201)
+                .assertBodyContains("\"id\"");
     }
 
     @Test
@@ -156,9 +139,9 @@ public class SimpleApiTest {
         requestInfo.addQueryParam("force", "true");
         requestInfo.setBody(body);
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertBodyContains("Updated Title");
     }
 
     // ════════════════════════════════════════════
@@ -182,9 +165,8 @@ public class SimpleApiTest {
         requestInfo.addQueryParam("format", "xml");
         requestInfo.setBody(body);
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 201);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(201);
     }
 
     // ════════════════════════════════════════════
@@ -206,10 +188,10 @@ public class SimpleApiTest {
         requestInfo.setPath("/posts");
         requestInfo.setBody(body);
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 201);
-        Assert.assertTrue(response.body().contains("\"id\""));
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(201)
+                .assertBodyContains("\"id\"")
+                .assertBodyNotEmpty();
     }
 
     @Test
@@ -228,9 +210,9 @@ public class SimpleApiTest {
         requestInfo.setPath("/posts/1");
         requestInfo.setBody(body);
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertBodyContains("Fully Replaced");
     }
 
     @Test
@@ -246,9 +228,9 @@ public class SimpleApiTest {
         requestInfo.setPath("/posts/1");
         requestInfo.setBody(body);
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertBodyContains("Partially Updated");
     }
 
     // ════════════════════════════════════════════
@@ -264,9 +246,9 @@ public class SimpleApiTest {
         requestInfo.addHeader("X-Custom-Header", "test-value");
         requestInfo.addHeader("Cache-Control", "no-cache");
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 200);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(200)
+                .assertHeader("content-type", "application/json");
     }
 
     @Test
@@ -286,9 +268,9 @@ public class SimpleApiTest {
         requestInfo.addHeader("X-Request-Id", "abc-123");
         requestInfo.setBody(body);
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 201);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(201)
+                .assertBodyContains("\"id\"");
     }
 
     // ════════════════════════════════════════════
@@ -314,10 +296,12 @@ public class SimpleApiTest {
         requestInfo.addQueryParam("source", "automated-test");
         requestInfo.setBody(body);
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 201);
-        Assert.assertTrue(response.body().contains("\"id\""));
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(201)
+                .assertBodyContains("\"id\"")
+                .assertBodyContains("Full combo")
+                .assertBodyNotEmpty()
+                .assertDurationLessThan(10000);
     }
 
     // ════════════════════════════════════════════
@@ -330,9 +314,8 @@ public class SimpleApiTest {
         requestInfo.setMethod("GET");
         requestInfo.setPath("/users/99999");
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 404);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(404);
     }
 
     @Test
@@ -341,9 +324,7 @@ public class SimpleApiTest {
         requestInfo.setMethod("GET");
         requestInfo.setPath("/this-does-not-exist");
 
-        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
-
-        Assert.assertEquals(response.statusCode(), 404);
+        apiClient.sendRequest(requestInfo)
+                .assertStatus(404);
     }
-
 }

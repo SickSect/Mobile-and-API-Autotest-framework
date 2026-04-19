@@ -1,6 +1,7 @@
 package org.ugina.ApiClient.Client;
 
 import org.ugina.ApiClient.Config.ApiClientConfigReader;
+import org.ugina.ApiClient.Data.ApiResponse;
 import org.ugina.ApiClient.Data.IRequestBody;
 import org.ugina.ApiClient.Data.RequestInfo;
 import org.ugina.ApiClient.utils.Log;
@@ -157,7 +158,7 @@ public class ApiRequestClient  {
      * @throws IOException если произошла ошибка сети (таймаут, недоступный хост, разрыв соединения)
      * @throws InterruptedException если поток был прерван во время ожидания ответа
      */
-    public HttpResponse<String> sendRequest(RequestInfo requestInfo) throws IOException, InterruptedException {
+    public ApiResponse sendRequest(RequestInfo requestInfo) throws IOException, InterruptedException {
         // Have body or not
         HttpRequest.BodyPublisher bodyPublisher;
         if (requestInfo.getBody() != null) {
@@ -198,8 +199,8 @@ public class ApiRequestClient  {
             long duration = System.currentTimeMillis() - start;
 
             logResponse(response, duration);
-
-            return response;
+            ApiResponse customResponse = new ApiResponse(response, duration);
+            return customResponse;
 
         } catch (IOException e) {
             // Сетевые ошибки: таймаут, DNS не найден, сервер не отвечает, разрыв соединения
