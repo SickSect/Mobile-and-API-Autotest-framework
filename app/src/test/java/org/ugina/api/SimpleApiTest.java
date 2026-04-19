@@ -37,82 +37,313 @@ public class SimpleApiTest {
         HttpResponse<String> response = apiClient.sendRequest(requestInfo);
     }
 
-    // ──── Get с JSON ────
+// ════════════════════════════════════════════
+    //  БЕЗ ТЕЛА (GET, DELETE)
+    // ════════════════════════════════════════════
 
     @Test
-    public void testGetWithJson() throws Exception {
-        // JsonBody оборачивает строку и выставляет Content-Type: application/json
+    public void testGetWithoutBody() throws Exception {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("GET");
+        requestInfo.setPath("/users");
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 200);
+        Assert.assertTrue(response.body().contains("\"email\""),
+                "Ответ должен содержать список пользователей с полем email");
+    }
+
+    @Test
+    public void testGetSingleResource() throws Exception {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("GET");
+        requestInfo.setPath("/users/1");
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 200);
+        Assert.assertTrue(response.body().contains("Leanne Graham"),
+                "Пользователь с ID=1 должен быть Leanne Graham");
+    }
+
+    @Test
+    public void testDeleteWithoutBody() throws Exception {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("DELETE");
+        requestInfo.setPath("/posts/1");
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 200);
+    }
+
+    // ════════════════════════════════════════════
+    //  С QUERY-ПАРАМЕТРАМИ, БЕЗ ТЕЛА
+    // ════════════════════════════════════════════
+
+    @Test
+    public void testGetWithSingleQueryParam() throws Exception {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("GET");
+        requestInfo.setPath("/comments");
+        requestInfo.addQueryParam("postId", "1");
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 200);
+        Assert.assertTrue(response.body().contains("\"postId\": 1"),
+                "Все комментарии должны быть от поста с ID=1");
+    }
+
+    @Test
+    public void testGetWithMultipleQueryParams() throws Exception {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("GET");
+        requestInfo.setPath("/posts");
+        requestInfo.addQueryParam("userId", "1");
+        requestInfo.addQueryParam("id", "1");
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 200);
+        Assert.assertTrue(response.body().contains("\"userId\": 1"));
+        Assert.assertTrue(response.body().contains("\"id\": 1"));
+    }
+
+    // ════════════════════════════════════════════
+    //  QUERY-ПАРАМЕТРЫ + JSON ТЕЛО
+    // ════════════════════════════════════════════
+
+    @Test
+    public void testPostWithJsonAndQueryParams() throws Exception {
         JsonRequestBody body = new JsonRequestBody("""
                 {
-                    "name": "Test User",
-                    "email": "test@example.com"
+                    "title": "Test Post",
+                    "body": "Content with query params",
+                    "userId": 1
                 }
                 """);
 
         RequestInfo requestInfo = new RequestInfo();
-        requestInfo.setMethod("GET");
-        requestInfo.setPath("/users");
+        requestInfo.setMethod("POST");
+        requestInfo.setPath("/posts");
+        requestInfo.addQueryParam("source", "test");
+        requestInfo.addQueryParam("version", "2");
         requestInfo.setBody(body);
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 201);
+        Assert.assertTrue(response.body().contains("\"id\""),
+                "Ответ должен содержать ID созданного ресурса");
+    }
+
+    @Test
+    public void testPutWithJsonAndQueryParams() throws Exception {
+        JsonRequestBody body = new JsonRequestBody("""
+                {
+                    "id": 1,
+                    "title": "Updated Title",
+                    "body": "Updated body",
+                    "userId": 1
+                }
+                """);
+
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("PUT");
+        requestInfo.setPath("/posts/1");
+        requestInfo.addQueryParam("force", "true");
+        requestInfo.setBody(body);
+
         HttpResponse<String> response = apiClient.sendRequest(requestInfo);
 
         Assert.assertEquals(response.statusCode(), 200);
-        Assert.assertTrue(response.body().contains("\"id\""));
-
-        System.out.println("POST /users (JSON) → " + response.statusCode());
-        System.out.println("Response: " + response.body());
     }
 
-    // ──── POST с XML ────
+    // ════════════════════════════════════════════
+    //  QUERY-ПАРАМЕТРЫ + XML ТЕЛО
+    // ════════════════════════════════════════════
 
     @Test
-    public void testPostWithXml() throws Exception {
-        // XmlBody — тот же интерфейс, но Content-Type: application/xml
-        // jsonplaceholder не понимает XML, но нам важно что запрос уходит корректно
+    public void testPostWithXmlAndQueryParams() throws Exception {
         XmlRequestBody body = new XmlRequestBody("""
                 <?xml version="1.0" encoding="UTF-8"?>
-                <user>
-                    <name>Test User</name>
-                    <email>test@example.com</email>
-                </user>
+                <post>
+                    <title>XML Post</title>
+                    <body>Created via XML with query params</body>
+                    <userId>1</userId>
+                </post>
                 """);
 
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setMethod("POST");
-        requestInfo.setPath("/users");
+        requestInfo.setPath("/posts");
+        requestInfo.addQueryParam("format", "xml");
         requestInfo.setBody(body);
+
         HttpResponse<String> response = apiClient.sendRequest(requestInfo);
 
-        response = apiClient.sendRequest(requestInfo);
-
-        // jsonplaceholder вернёт 201 даже для XML — ему всё равно на Content-Type
-        // В реальном API ты увидишь разницу в обработке
         Assert.assertEquals(response.statusCode(), 201);
-
-        System.out.println("POST /users (XML) → " + response.statusCode());
-        System.out.println("Response: " + response.body());
     }
 
-    // ──── POST с XML ────
+    // ════════════════════════════════════════════
+    //  ВСЕ HTTP-МЕТОДЫ С JSON
+    // ════════════════════════════════════════════
 
-/*    @Test
-    public void testPostWithXml() throws Exception {
-        // XmlBody — тот же интерфейс, но Content-Type: application/xml
-        // jsonplaceholder не понимает XML, но нам важно что запрос уходит корректно
-        XmlRequestBody body = new XmlRequestBody("""
-                <?xml version="1.0" encoding="UTF-8"?>
-                <user>
-                    <name>Test User</name>
-                    <email>test@example.com</email>
-                </user>
+    @Test
+    public void testPostWithJson() throws Exception {
+        JsonRequestBody body = new JsonRequestBody("""
+                {
+                    "title": "New Post",
+                    "body": "Post content",
+                    "userId": 1
+                }
                 """);
 
-        HttpResponse<String> response = apiClient.post("/users", body);
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("POST");
+        requestInfo.setPath("/posts");
+        requestInfo.setBody(body);
 
-        // jsonplaceholder вернёт 201 даже для XML — ему всё равно на Content-Type
-        // В реальном API ты увидишь разницу в обработке
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
         Assert.assertEquals(response.statusCode(), 201);
+        Assert.assertTrue(response.body().contains("\"id\""));
+    }
 
-        System.out.println("POST /users (XML) → " + response.statusCode());
-        System.out.println("Response: " + response.body());
-    }*/
+    @Test
+    public void testPutWithJson() throws Exception {
+        JsonRequestBody body = new JsonRequestBody("""
+                {
+                    "id": 1,
+                    "title": "Fully Replaced",
+                    "body": "New body",
+                    "userId": 1
+                }
+                """);
+
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("PUT");
+        requestInfo.setPath("/posts/1");
+        requestInfo.setBody(body);
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 200);
+    }
+
+    @Test
+    public void testPatchWithJson() throws Exception {
+        JsonRequestBody body = new JsonRequestBody("""
+                {
+                    "title": "Partially Updated"
+                }
+                """);
+
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("PATCH");
+        requestInfo.setPath("/posts/1");
+        requestInfo.setBody(body);
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 200);
+    }
+
+    // ════════════════════════════════════════════
+    //  С КАСТОМНЫМИ ЗАГОЛОВКАМИ
+    // ════════════════════════════════════════════
+
+    @Test
+    public void testGetWithCustomHeaders() throws Exception {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("GET");
+        requestInfo.setPath("/users/1");
+        requestInfo.addHeader("Accept", "application/json");
+        requestInfo.addHeader("X-Custom-Header", "test-value");
+        requestInfo.addHeader("Cache-Control", "no-cache");
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 200);
+    }
+
+    @Test
+    public void testPostWithHeadersAndJson() throws Exception {
+        JsonRequestBody body = new JsonRequestBody("""
+                {
+                    "title": "Post with headers",
+                    "body": "Testing custom headers",
+                    "userId": 1
+                }
+                """);
+
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("POST");
+        requestInfo.setPath("/posts");
+        requestInfo.addHeader("Accept", "application/json");
+        requestInfo.addHeader("X-Request-Id", "abc-123");
+        requestInfo.setBody(body);
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 201);
+    }
+
+    // ════════════════════════════════════════════
+    //  ВСЁ ВМЕСТЕ: ЗАГОЛОВКИ + QUERY + ТЕЛО
+    // ════════════════════════════════════════════
+
+    @Test
+    public void testFullRequestWithEverything() throws Exception {
+        JsonRequestBody body = new JsonRequestBody("""
+                {
+                    "title": "Full combo",
+                    "body": "Headers + query + JSON body",
+                    "userId": 1
+                }
+                """);
+
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("POST");
+        requestInfo.setPath("/posts");
+        requestInfo.addHeader("Accept", "application/json");
+        requestInfo.addHeader("X-Request-Id", "full-combo-001");
+        requestInfo.addQueryParam("debug", "true");
+        requestInfo.addQueryParam("source", "automated-test");
+        requestInfo.setBody(body);
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 201);
+        Assert.assertTrue(response.body().contains("\"id\""));
+    }
+
+    // ════════════════════════════════════════════
+    //  НЕГАТИВНЫЕ КЕЙСЫ
+    // ════════════════════════════════════════════
+
+    @Test
+    public void testGetNonExistentResource() throws Exception {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("GET");
+        requestInfo.setPath("/users/99999");
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 404);
+    }
+
+    @Test
+    public void testGetNonExistentEndpoint() throws Exception {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setMethod("GET");
+        requestInfo.setPath("/this-does-not-exist");
+
+        HttpResponse<String> response = apiClient.sendRequest(requestInfo);
+
+        Assert.assertEquals(response.statusCode(), 404);
+    }
+
 }
