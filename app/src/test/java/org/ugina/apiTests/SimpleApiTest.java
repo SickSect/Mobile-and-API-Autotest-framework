@@ -14,7 +14,9 @@ public class SimpleApiTest {
 
     @BeforeClass
     public void setUp() {
-        apiClient = ApiClientProvider.get("test");
+        if (!ApiClientProvider.has("jsonplaceholder"))
+            ApiClientProvider.register("jsonplaceholder", "https://jsonplaceholder.typicode.com");
+        apiClient = ApiClientProvider.get("jsonplaceholder");
     }
 
     // ──── GET ────

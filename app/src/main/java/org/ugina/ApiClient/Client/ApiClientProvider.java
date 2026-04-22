@@ -98,6 +98,14 @@ public class ApiClientProvider {
     }
 
     /**
+     * Checks if a client with this name is already registered.
+     * Проверяет, зарегистрирован ли клиент с таким именем.
+     */
+    public static boolean has(String name) {
+        return clients.containsKey(name);
+    }
+
+    /**
      * Explicitly registers a named host.
      * Явно регистрирует именованный хост.
      *
