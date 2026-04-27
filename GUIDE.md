@@ -1,27 +1,27 @@
-# Framework Usage Guide / Инструкция по использованию фреймворка
+# Framework Usage Guide
 
-Эта инструкция написана для тех, кто впервые работает с автотестами. Каждый пример — рабочий код, который можно скопировать и запустить.
+This guide is written for those who are new to test automation. Every example is working code that you can copy and run.
 
-## Оглавление
+## Table of Contents
 
-1. [Как создать тестовый класс](#1-как-создать-тестовый-класс)
-2. [Как отправить запрос](#2-как-отправить-запрос)
-3. [Как проверить код ответа](#3-как-проверить-код-ответа)
-4. [Как проверить содержимое ответа](#4-как-проверить-содержимое-ответа)
-5. [Как отправить запрос с телом (POST)](#5-как-отправить-запрос-с-телом-post)
-6. [Как работать с базой данных](#6-как-работать-с-базой-данных)
-7. [Как отправлять запросы на разные хосты](#7-как-отправлять-запросы-на-разные-хосты)
-8. [Как работать с разными базами данных](#8-как-работать-с-разными-базами-данных)
-9. [Как работать с токенами (авторизация)](#9-как-работать-с-токенами-авторизация)
-10. [Как именовать тесты для Allure-отчёта](#10-как-именовать-тесты-для-allure-отчёта)
-11. [Как запускать тесты](#11-как-запускать-тесты)
-12. [Шпаргалка](#12-шпаргалка)
+1. [How to create a test class](#1-how-to-create-a-test-class)
+2. [How to send a request](#2-how-to-send-a-request)
+3. [How to check the status code](#3-how-to-check-the-status-code)
+4. [How to check response content](#4-how-to-check-response-content)
+5. [How to send a request with body (POST)](#5-how-to-send-a-request-with-body-post)
+6. [How to work with a database](#6-how-to-work-with-a-database)
+7. [How to send requests to different hosts](#7-how-to-send-requests-to-different-hosts)
+8. [How to work with multiple databases](#8-how-to-work-with-multiple-databases)
+9. [How to work with tokens (authentication)](#9-how-to-work-with-tokens-authentication)
+10. [How to name tests for Allure reports](#10-how-to-name-tests-for-allure-reports)
+11. [How to run tests](#11-how-to-run-tests)
+12. [Cheat sheet](#12-cheat-sheet)
 
 ---
 
-## 1. Как создать тестовый класс
+## 1. How to create a test class
 
-Каждый тестовый файл — это Java-класс с методами, помеченными `@Test`. Фреймворк TestNG находит эти методы и запускает их.
+Each test file is a Java class with methods marked `@Test`. The TestNG framework finds these methods and runs them.
 
 ```java
 package org.ugina.apiTests;
@@ -36,72 +36,72 @@ public class MyFirstTest {
 
     private ApiRequestClient client;
 
-    // @BeforeClass — выполняется ОДИН РАЗ перед всеми тестами в этом классе.
-    // Здесь мы настраиваем клиент: указываем на какой сервер отправлять запросы.
+    // @BeforeClass — runs ONCE before all tests in this class.
+    // Here we set up the client: specify which server to send requests to.
     @BeforeClass
     public void setUp() {
-        // has() проверяет: клиент с таким именем уже создан?
-        // Если да — не создаём заново, берём существующий.
-        // Без этой проверки каждый тестовый класс будет пересоздавать клиент.
+        // has() checks: does a client with this name already exist?
+        // If yes — don't recreate, use the existing one.
+        // Without this check, every test class would recreate the client.
         if (!ApiClientProvider.has("myapi")) {
             ApiClientProvider.register("myapi", "https://jsonplaceholder.typicode.com");
         }
         client = ApiClientProvider.get("myapi");
     }
 
-    // @Test — это один тест. Каждый @Test-метод — отдельная проверка.
+    // @Test — this is one test. Each @Test method is a separate check.
     @Test
     public void myFirstTest() throws Exception {
-        // Здесь будет код теста
+        // Test code goes here
     }
 }
 ```
 
-**Что здесь происходит:**
-- `@BeforeClass` — подготовка. Выполняется один раз перед всеми тестами.
-- `ApiClientProvider.register("myapi", "...")` — регистрируем хост под именем "myapi".
-- `ApiClientProvider.get("myapi")` — получаем клиент для этого хоста.
-- `@Test` — метод-тест. Пиши столько `@Test`-методов, сколько нужно проверок.
+**What's happening here:**
+- `@BeforeClass` — setup. Runs once before all tests.
+- `ApiClientProvider.register("myapi", "...")` — registers a host under the name "myapi".
+- `ApiClientProvider.get("myapi")` — gets the client for this host.
+- `@Test` — a test method. Write as many `@Test` methods as you need.
 
 ---
 
-## 2. Как отправить запрос
+## 2. How to send a request
 
-Для отправки запроса нужны три шага: создать `RequestInfo`, заполнить его, отправить через `client`.
+Sending a request takes three steps: create a `RequestInfo`, fill it in, send it via `client`.
 
 ```java
 @Test
 public void testGetUsers() throws Exception {
-    // Шаг 1: Создаём объект запроса
+    // Step 1: Create a request object
     RequestInfo request = new RequestInfo();
 
-    // Шаг 2: Заполняем — ЧТО отправляем
-    request.setMethod("GET");          // HTTP-метод: GET, POST, PUT, DELETE, PATCH
-    request.setPath("/users");         // Путь (добавляется к базовому URL)
+    // Step 2: Fill in — WHAT we're sending
+    request.setMethod("GET");          // HTTP method: GET, POST, PUT, DELETE, PATCH
+    request.setPath("/users");         // Path (appended to the base URL)
 
-    // Шаг 3: Отправляем
+    // Step 3: Send
     client.sendRequest(request);
 }
 ```
 
-**Что такое HTTP-методы:**
-- `GET` — получить данные (список пользователей, информацию о товаре)
-- `POST` — создать что-то новое (нового пользователя, заказ)
-- `PUT` — полностью заменить существующее (обновить все поля пользователя)
-- `PATCH` — частично обновить (поменять только email)
-- `DELETE` — удалить
+**What are HTTP methods:**
+- `GET` — retrieve data (list of users, product info)
+- `POST` — create something new (a new user, an order)
+- `PUT` — fully replace an existing resource (update all user fields)
+- `PATCH` — partially update (change only the email)
+- `DELETE` — delete
 
 ---
 
-## 3. Как проверить код ответа
+## 3. How to check the status code
 
-Каждый HTTP-ответ содержит числовой код. Основные:
-- `200` — всё хорошо
-- `201` — создано успешно
-- `400` — ошибка в запросе (неправильные данные)
-- `401` — не авторизован (нет токена или токен невалиден)
-- `404` — не найдено
-- `500` — ошибка на сервере
+Every HTTP response contains a numeric code. The main ones:
+- `200` — success
+- `201` — created successfully
+- `400` — bad request (invalid data)
+- `401` — unauthorized (no token or token is invalid)
+- `404` — not found
+- `500` — server error
 
 ```java
 @Test
@@ -110,8 +110,8 @@ public void testStatusCode() throws Exception {
     request.setMethod("GET");
     request.setPath("/users");
 
-    // .assertStatus(200) — проверяет что сервер вернул код 200.
-    // Если код другой — тест упадёт с понятным сообщением:
+    // .assertStatus(200) — checks that the server returned code 200.
+    // If the code is different — the test fails with a clear message:
     // "Expected status 200, got 404"
     client.sendRequest(request)
             .assertStatus(200);
@@ -120,9 +120,9 @@ public void testStatusCode() throws Exception {
 
 ---
 
-## 4. Как проверить содержимое ответа
+## 4. How to check response content
 
-Сервер возвращает данные в теле ответа (обычно JSON). Можно проверить что в нём есть нужные слова или значения.
+The server returns data in the response body (usually JSON). You can check that it contains the right words or values.
 
 ```java
 @Test
@@ -132,49 +132,49 @@ public void testResponseContent() throws Exception {
     request.setPath("/users/1");
 
     client.sendRequest(request)
-            .assertStatus(200)                          // код 200
-            .assertBodyContains("Leanne Graham")        // в ответе есть это имя
-            .assertBodyContains("\"email\"")            // в ответе есть поле email
-            .assertBodyNotContains("error")             // в ответе НЕТ слова error
-            .assertBodyNotEmpty()                       // ответ не пустой
-            .assertDurationLessThan(5000);              // ответ пришёл быстрее 5 секунд
+            .assertStatus(200)                          // status 200
+            .assertBodyContains("Leanne Graham")        // response contains this name
+            .assertBodyContains("\"email\"")            // response has an email field
+            .assertBodyNotContains("error")             // response does NOT contain "error"
+            .assertBodyNotEmpty()                       // response is not empty
+            .assertDurationLessThan(5000);              // response arrived in less than 5 seconds
 }
 ```
 
-**Все проверки можно цеплять в цепочку.** Каждая проверка возвращает тот же объект ответа, поэтому можно писать `.assertStatus(200).assertBodyContains("...").assertDurationLessThan(5000)` в одну цепочку.
+**All checks can be chained.** Each check returns the same response object, so you can write `.assertStatus(200).assertBodyContains("...").assertDurationLessThan(5000)` in one chain.
 
-**Если нужно сохранить ответ и использовать позже:**
+**If you need to save a response and use it later:**
 
 ```java
 @Test
 public void testSaveAndCompare() throws Exception {
-    // Отправляем первый запрос и сохраняем ответ
+    // Send the first request and save the response
     RequestInfo request1 = new RequestInfo();
     request1.setMethod("GET");
     request1.setPath("/users/1");
     ApiResponse response1 = client.sendRequest(request1);
 
-    // ... отправляем ещё 3 запроса, делаем что-то ...
+    // ... send 3 more requests, do something ...
 
-    // Отправляем пятый запрос
+    // Send the fifth request
     RequestInfo request5 = new RequestInfo();
     request5.setMethod("GET");
     request5.setPath("/users/1");
     ApiResponse response5 = client.sendRequest(request5);
 
-    // Сравниваем данные из первого и пятого запросов
+    // Compare data from the first and fifth requests
     Assert.assertEquals(response1.body(), response5.body(),
-            "Данные не должны измениться между запросами");
+            "Data should not change between requests");
 }
 ```
 
-**Сохранение данных между запросами — главное преимущество фреймворка.** Ты можешь сохранить ответ первого запроса и сравнить его с ответом пятого. Всё в одном методе, без пересылки данных между классами.
+**Saving data between requests is the framework's key advantage.** You can save the response of the first request and compare it with the fifth. Everything lives in one method — no passing state between classes.
 
 ---
 
-## 5. Как отправить запрос с телом (POST)
+## 5. How to send a request with body (POST)
 
-При создании ресурса (POST, PUT, PATCH) нужно отправить данные — тело запроса.
+When creating a resource (POST, PUT, PATCH), you need to send data — the request body.
 
 ```java
 import org.ugina.ApiClient.Data.JsonRequestBody;
@@ -185,7 +185,7 @@ public void testCreateUser() throws Exception {
     request.setMethod("POST");
     request.setPath("/users");
 
-    // Тело запроса — JSON-строка с данными нового пользователя
+    // Request body — a JSON string with the new user's data
     request.setBody(new JsonRequestBody("""
             {
                 "name": "John",
@@ -195,12 +195,12 @@ public void testCreateUser() throws Exception {
             """));
 
     client.sendRequest(request)
-            .assertStatus(201)              // 201 = создано
-            .assertBodyContains("\"id\"");  // сервер вернул ID нового ресурса
+            .assertStatus(201)              // 201 = created
+            .assertBodyContains("\"id\"");  // server returned the new resource's ID
 }
 ```
 
-**С заголовками и query-параметрами:**
+**With headers and query parameters:**
 
 ```java
 @Test
@@ -209,15 +209,15 @@ public void testFullRequest() throws Exception {
     request.setMethod("POST");
     request.setPath("/users");
 
-    // Заголовки — метаинформация о запросе
+    // Headers — metadata about the request
     request.addHeader("Accept", "application/json");
     request.addHeader("X-Request-Id", "test-123");
 
-    // Query-параметры — добавляются к URL: /users?source=test&version=2
+    // Query parameters — appended to the URL: /users?source=test&version=2
     request.addQueryParam("source", "test");
     request.addQueryParam("version", "2");
 
-    // Тело
+    // Body
     request.setBody(new JsonRequestBody("""
             {"name": "John", "email": "john@example.com"}
             """));
@@ -227,7 +227,7 @@ public void testFullRequest() throws Exception {
 }
 ```
 
-**Если тело в формате XML:**
+**If the body is XML instead of JSON:**
 
 ```java
 import org.ugina.ApiClient.Data.XmlRequestBody;
@@ -235,7 +235,7 @@ import org.ugina.ApiClient.Data.XmlRequestBody;
 request.setBody(new XmlRequestBody("""
         <?xml version="1.0" encoding="UTF-8"?>
         <user>
-            <name>John</name>
+            <n>John</n>
             <email>john@example.com</email>
         </user>
         """));
@@ -243,9 +243,9 @@ request.setBody(new XmlRequestBody("""
 
 ---
 
-## 6. Как работать с базой данных
+## 6. How to work with a database
 
-### Подключение
+### Connection
 
 ```java
 import org.ugina.ApiClient.Db.JdbcDbClient;
@@ -262,34 +262,34 @@ IDbClient db = new JdbcDbClient(
 db.connect();
 ```
 
-### SELECT — посмотреть что в базе
+### SELECT — check what's in the database
 
 ```java
-// Получить всех активных пользователей старше 25
+// Get all active users older than 25
 List<Map<String, Object>> users = db.select("users")
-        .columns("id", "name", "email")       // какие колонки нужны
+        .columns("id", "name", "email")       // which columns
         .where("status", "active")             // WHERE status = 'active'
         .where("age", ">", 25)                 // AND age > 25
-        .orderBy("name")                       // сортировка
-        .limit(10)                             // не больше 10 строк
+        .orderBy("name")                       // sorting
+        .limit(10)                             // no more than 10 rows
         .execute();
 
-// Результат — список. Каждый элемент — одна строка из базы:
+// Result is a list. Each element is one row from the database:
 // users.get(0).get("name") → "Alice"
 
-// Получить одну строку
+// Get a single row
 Map<String, Object> user = db.select("users")
         .where("id", 42)
         .executeOne();
 
-// Получить одно значение (COUNT, MAX и т.д.)
+// Get a single value (COUNT, MAX, etc.)
 Object count = db.select("users")
         .columns("COUNT(*)")
         .where("status", "active")
         .executeScalar();
 ```
 
-### INSERT — добавить запись
+### INSERT — add a record
 
 ```java
 db.insert("users")
@@ -299,7 +299,7 @@ db.insert("users")
         .execute();
 ```
 
-### UPDATE — обновить запись
+### UPDATE — update a record
 
 ```java
 db.update("users")
@@ -308,7 +308,7 @@ db.update("users")
         .execute();
 ```
 
-### DELETE — удалить запись
+### DELETE — delete a record
 
 ```java
 db.delete("users")
@@ -316,12 +316,12 @@ db.delete("users")
         .execute();
 ```
 
-### Полный пример: API-запрос + проверка в базе
+### Full example: API request + database verification
 
 ```java
 @Test
 public void testCreateUserAndCheckDb() throws Exception {
-    // 1. Создаём пользователя через API
+    // 1. Create a user via API
     RequestInfo request = new RequestInfo();
     request.setMethod("POST");
     request.setPath("/users");
@@ -332,31 +332,31 @@ public void testCreateUserAndCheckDb() throws Exception {
     ApiResponse response = client.sendRequest(request);
     response.assertStatus(201);
 
-    // 2. Проверяем что пользователь появился в базе
+    // 2. Verify the user appeared in the database
     Map<String, Object> user = db.select("users")
             .where("email", "john@example.com")
             .executeOne();
 
-    Assert.assertNotNull(user, "Пользователь должен быть в базе");
+    Assert.assertNotNull(user, "User should be in the database");
     Assert.assertEquals(user.get("name"), "John");
 
-    // 3. Чистим за собой
+    // 3. Clean up after ourselves
     db.delete("users").where("email", "john@example.com").execute();
 }
 ```
 
 ---
 
-## 7. Как отправлять запросы на разные хосты
+## 7. How to send requests to different hosts
 
-В одном тесте можно работать с несколькими серверами одновременно.
+You can work with multiple servers in a single test.
 
 ```java
 @BeforeClass
 public void setUp() {
-    // has() предотвращает пересоздание клиента.
-    // Если 10 тестовых классов используют "main-api" — клиент создастся один раз,
-    // остальные 9 получат тот же экземпляр. Один HttpClient, один пул соединений.
+    // has() prevents client recreation.
+    // If 10 test classes use "main-api" — the client is created once,
+    // the other 9 get the same instance. One HttpClient, one connection pool.
     if (!ApiClientProvider.has("main-api")) {
         ApiClientProvider.register("main-api", "https://api.example.com");
     }
@@ -370,7 +370,7 @@ public void setUp() {
 
 @Test
 public void testCrossServiceFlow() throws Exception {
-    // Запрос на auth-сервис
+    // Request to auth service
     RequestInfo login = new RequestInfo();
     login.setMethod("POST");
     login.setPath("/login");
@@ -379,7 +379,7 @@ public void testCrossServiceFlow() throws Exception {
             """));
     ApiResponse loginResponse = ApiClientProvider.get("auth").sendRequest(login);
 
-    // Запрос на основной API
+    // Request to main API
     RequestInfo order = new RequestInfo();
     order.setMethod("POST");
     order.setPath("/orders");
@@ -388,7 +388,7 @@ public void testCrossServiceFlow() throws Exception {
             """));
     ApiResponse orderResponse = ApiClientProvider.get("main-api").sendRequest(order);
 
-    // Проверка на платёжном сервисе
+    // Check on payment service
     RequestInfo payment = new RequestInfo();
     payment.setMethod("GET");
     payment.setPath("/payments/latest");
@@ -397,13 +397,13 @@ public void testCrossServiceFlow() throws Exception {
 }
 ```
 
-> **Важно:** всегда используй `has()` перед `register()`. Без проверки каждый тестовый класс будет пересоздавать клиент — это не ошибка, но лишняя работа. С проверкой — один клиент на весь прогон, независимо от количества тестовых классов.
+> **Important:** always use `has()` before `register()`. Without the check, every test class will recreate the client — not a bug, but unnecessary work. With the check — one client for the entire test run, regardless of how many test classes use it.
 
 ---
 
-## 8. Как работать с разными базами данных
+## 8. How to work with multiple databases
 
-Аналогично хостам — создаёшь несколько клиентов.
+Same approach as with hosts — create multiple clients.
 
 ```java
 private IDbClient mainDb;
@@ -422,17 +422,17 @@ public void setUp() {
 
 @Test
 public void testDataSync() throws Exception {
-    // Данные из основной базы
+    // Data from the main database
     Map<String, Object> user = mainDb.select("users")
             .where("id", 1)
             .executeOne();
 
-    // Те же данные в аналитической базе
+    // Same data in the analytics database
     Map<String, Object> event = analyticsDb.select("user_events")
             .where("user_id", 1)
             .executeOne();
 
-    Assert.assertNotNull(event, "Данные должны попасть в аналитику");
+    Assert.assertNotNull(event, "Data should reach analytics");
 }
 
 @AfterClass
@@ -444,9 +444,9 @@ public void tearDown() {
 
 ---
 
-## 9. Как работать с токенами (авторизация)
+## 9. How to work with tokens (authentication)
 
-Если API требует авторизацию:
+If the API requires authentication:
 
 ```java
 import org.ugina.ApiClient.Token.ApiTokenManager;
@@ -466,10 +466,10 @@ public void testProtectedEndpoint() {
     request.setMethod("GET");
     request.setPath("/users/me");
 
-    // sendWithAuth — автоматически:
-    //   1. Добавляет токен в заголовок
-    //   2. Если токен истёк — обновляет
-    //   3. Если 401 — обновляет и повторяет
+    // sendWithAuth — automatically:
+    //   1. Adds the token to the header
+    //   2. If the token expired — refreshes it
+    //   3. If 401 — refreshes and retries
     tokenManager.sendWithAuth("api", request)
             .assertStatus(200)
             .assertBodyContains("\"email\"");
@@ -478,28 +478,28 @@ public void testProtectedEndpoint() {
 
 ---
 
-## 10. Как именовать тесты для Allure-отчёта
+## 10. How to name tests for Allure reports
 
-Аннотации Allure группируют тесты в красивый отчёт:
+Allure annotations group tests into a structured report:
 
 ```java
 import io.qameta.allure.*;
 
-@Epic("User Management")                     // верхний уровень — модуль
+@Epic("User Management")                     // top level — module
 public class UserApiTest {
 
     @Test
-    @Feature("User CRUD")                    // фича внутри модуля
-    @Story("Create user")                    // конкретный сценарий
-    @Description("POST /users creates a new user and returns 201")  // описание
-    @Severity(SeverityLevel.CRITICAL)        // критичность
+    @Feature("User CRUD")                    // feature within the module
+    @Story("Create user")                    // specific scenario
+    @Description("POST /users creates a new user and returns 201")  // description
+    @Severity(SeverityLevel.CRITICAL)        // severity
     public void testCreateUser() throws Exception {
         // ...
     }
 }
 ```
 
-**Как это выглядит в отчёте:**
+**How it looks in the report:**
 
 ```
 📁 User Management                          ← @Epic
@@ -509,11 +509,11 @@ public class UserApiTest {
        Severity: CRITICAL                    ← @Severity
 ```
 
-**Минимальный набор — хотя бы `@Description`:**
+**Minimum recommended — at least `@Description`:**
 
 ```java
 @Test
-@Description("Проверка что GET /users возвращает список пользователей")
+@Description("Verify that GET /users returns a list of users")
 public void testGetUsers() throws Exception {
     // ...
 }
@@ -521,54 +521,54 @@ public void testGetUsers() throws Exception {
 
 ---
 
-## 11. Как запускать тесты
+## 11. How to run tests
 
 ```bash
-./gradlew apiTest       # API-тесты (параллельно)
-./gradlew uiTest        # UI-тесты (Appium)
-./gradlew sslTest       # SSL-тесты
-./gradlew e2eTest       # DB + End-to-End тесты
-./gradlew test          # Все тесты
+./gradlew apiTest       # API tests (parallel)
+./gradlew uiTest        # UI tests (Appium)
+./gradlew sslTest       # SSL tests
+./gradlew e2eTest       # DB + End-to-End tests
+./gradlew test          # All tests
 ```
 
 ---
 
-## 12. Шпаргалка
+## 12. Cheat sheet
 
-### Запрос
+### Request
 
 ```java
 RequestInfo r = new RequestInfo();
-r.setMethod("GET");                              // метод
-r.setPath("/users");                             // путь
-r.addHeader("Accept", "application/json");       // заголовок
+r.setMethod("GET");                              // method
+r.setPath("/users");                             // path
+r.addHeader("Accept", "application/json");       // header
 r.addQueryParam("page", "1");                    // ?page=1
-r.setBody(new JsonRequestBody("{...}"));         // тело
+r.setBody(new JsonRequestBody("{...}"));         // body
 ```
 
-### Проверки
+### Assertions
 
 ```java
-response.assertStatus(200);                      // код ответа
-response.assertBodyContains("email");            // содержит
-response.assertBodyNotContains("error");         // не содержит
-response.assertBodyNotEmpty();                   // не пустой
-response.assertDurationLessThan(5000);           // быстрее 5с
-response.assertHeader("content-type", "json");   // заголовок
-response.assertSuccess();                        // код 2xx
+response.assertStatus(200);                      // status code
+response.assertBodyContains("email");            // contains
+response.assertBodyNotContains("error");         // does not contain
+response.assertBodyNotEmpty();                   // not empty
+response.assertDurationLessThan(5000);           // faster than 5s
+response.assertHeader("content-type", "json");   // header
+response.assertSuccess();                        // 2xx code
 ```
 
-### Данные ответа
+### Response data
 
 ```java
 response.statusCode();    // 200
 response.body();          // {"name": "John"}
 response.durationMs();    // 145
-response.header("...");   // значение заголовка
+response.header("...");   // header value
 response.isSuccess();     // true/false
 ```
 
-### База данных
+### Database
 
 ```java
 db.select("t").where("c", v).execute();                    // SELECT
@@ -580,7 +580,7 @@ db.delete("t").where("id", 1).execute();                   // DELETE
 ### Allure
 
 ```java
-@Epic("Модуль")           @Feature("Фича")
-@Story("Сценарий")        @Description("Описание")
+@Epic("Module")           @Feature("Feature")
+@Story("Scenario")        @Description("Description")
 @Severity(SeverityLevel.CRITICAL)
 ```
