@@ -1,12 +1,67 @@
 <configuration>
-    <!-- Зависимость: net.logstash.logback:logstash-logback-encoder -->
+
+    <!-- ════════════════════════════════════════════════════
+         Appender 1: JSON (for CI/Jenkins/ELK)
+         Вывод в JSON — для интеграции с системами мониторинга.
+         Каждая строка — один JSON-объект с полями @timestamp, message, level и т.д.
+         ════════════════════════════════════════════════════ -->
     <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>{"service":"my-app","env":"${ENV:prod}"}</customFields>
+            <customFields>{"service":"my-app","env":"${ENV:-local}"}</customFields>
         </encoder>
     </appender>
 
+    <!-- ════════════════════════════════════════════════════
+         Appender 2: HUMAN (for local development)
+         Человекочитаемый вывод — для локальной отладки.
+
+         Формат:
+         ┌──────────────────────────────────────────────────
+         │ 2026-04-27 14:30:05.123 [TestNG-method-1] INFO  ApiRequestClient
+         │ → ══════ REQUEST ══════
+         │ → → POST https://api.example.com/users
+         │ → Headers:
+         │ →   Content-Type: application/json
+         │ →   Authorization: ****
+         │ → ═════════════════════
+         └──────────────────────────────────────────────────
+
+         %d{HH:mm:ss.SSS}     — время (без даты, для краткости)
+         [%thread]             — имя потока (видно параллельность)
+         %-5level              — уровень, выровненный до 5 символов (INFO , WARN , ERROR)
+         %logger{20}          — имя класса, обрезанное до 20 символов
+         %msg                 — само сообщение
+         %n                   — перенос строки
+         ════════════════════════════════════════════════════ -->
+    <appender name="HUMAN" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{20} — %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ════════════════════════════════════════════════════
+         Переключение: -Dlog.format=human или -Dlog.format=json
+
+         По умолчанию (без параметра): human — для локальной разработки.
+         На Jenkins: ./gradlew apiTest -Dlog.format=json
+
+         Как работает:
+           <if> проверяет системное свойство log.format.
+           Если "json" — подключает JSON appender.
+           Иначе — подключает HUMAN appender.
+
+         Для <if> нужна зависимость в build.gradle:
+           implementation 'org.codehaus.janino:janino:3.1.12'
+         ════════════════════════════════════════════════════ -->
     <root level="INFO">
-        <appender-ref ref="JSON"/>
+        <if condition='property("log.format").equals("json")'>
+            <then>
+                <appender-ref ref="JSON"/>
+            </then>
+            <else>
+                <appender-ref ref="HUMAN"/>
+            </else>
+        </if>
     </root>
+
 </configuration>
